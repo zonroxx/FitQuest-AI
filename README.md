@@ -13,7 +13,6 @@ FitQuest combines AI-generated personalized workout plans with gamification mech
 - User authentication and profile management
 - Week-based workout progression with exercise tracking
 - Leaderboard to compete with other users
-- Responsive design with monochromatic theme
 
 ## Tech Stack
 
