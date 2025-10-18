@@ -121,7 +121,3 @@ The application uses three main tables:
 
 ### Leaderboard
 - `GET /leaderboard/` - Get rankings
-
-## License
-
-MIT License
