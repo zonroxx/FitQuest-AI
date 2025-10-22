@@ -1,37 +1,56 @@
-# FitQuest Frontend Prototype
+# FitQuest Frontend
 
-A simple React prototype for displaying AI-generated workouts in a todo list format.
+React-based frontend for the FitQuest AI-powered workout planner application.
 
 ## Features
 
-- 📅 Day-by-day workout view
-- ✅ Todo-style exercise checklist
-- 📊 Progress tracking with visual progress bar
-- 🎯 Exercise categorization with icons
-- 📱 Responsive design
+- Day-by-day workout view
+- Exercise completion tracking
+- Progress bar with level and XP system
+- User authentication (login/signup)
+- User profile management
+- Leaderboard rankings
+- Responsive design
 
-## Quick Start
+## Setup
 
 1. Install dependencies:
+
 ```bash
-cd frontend
 npm install
 ```
 
 2. Start the development server:
+
 ```bash
 npm start
 ```
 
-3. Open http://localhost:3000 in your browser
+The application will open at http://localhost:3000
 
-## Structure
+## API Integration
 
-- `App.js` - Main component with sample workout data
-- `components/WorkoutTodoList.js` - Daily workout display with progress tracking
-- `components/ExerciseItem.js` - Individual exercise item with completion status
-- `App.css` - Styling for the entire application
+The frontend connects to the FastAPI backend running on `http://localhost:8000`
 
-## Sample Data
+Endpoints used:
 
-The prototype uses sample data matching your AI workout generator format. To connect with real data, replace the `sampleWorkout` in `App.js` with API calls to your backend.
+- `/auth/signup` - User registration
+- `/auth/login` - User authentication
+- `/auth/me` - Get/update user profile
+- `/generate-workout` - Generate AI workout plan
+- `/progress/` - Get/update user progress
+- `/workouts/` - Save/retrieve workouts
+- `/leaderboard/` - Get user rankings
+
+## Technologies
+
+- React
+- CSS Variables for theming
+- Fetch API for HTTP requests
+- Local storage for token persistence
+
+## Available Scripts
+
+- `npm start` - Run development server
+- `npm build` - Build for production
+- `npm test` - Run tests
