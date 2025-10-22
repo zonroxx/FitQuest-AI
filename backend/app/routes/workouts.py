@@ -27,10 +27,10 @@ async def save_workout(
     db: Session = Depends(get_db)
 ):
     """Save or update the user's current workout plan"""
-    # Delete any existing current workout for this user
+    #Delete any existing current workout for this user
     db.query(WorkoutPlan).filter(WorkoutPlan.user_id == current_user.id).delete()
 
-    # Create new workout
+    #Create new workout
     new_workout = WorkoutPlan(
         user_id=current_user.id,
         plan_data=workout.plan_data,

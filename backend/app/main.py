@@ -6,7 +6,7 @@ from datetime import date
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 
-# Load environment variables from .env file
+#Load environment variables from .env file
 load_dotenv()
 
 from app.models.user import UserProfile
@@ -17,12 +17,12 @@ from app.routes import auth, progress, workouts, leaderboard
 from app.auth import get_current_user
 from app.models.db_models import User
 
-# Create database tables
+#Create database tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="FitQuest API")
 
-# CORS middleware for React frontend
+#CORS middleware for React frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],  # React app URL
@@ -31,13 +31,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
+#Include routers
 app.include_router(auth.router)
 app.include_router(progress.router)
 app.include_router(workouts.router)
 app.include_router(leaderboard.router)
 
-# In-memory storage (replace with database later)
+#In-memory storage (replace with database later)
 workout_plans = {}
 
 @app.post("/generate-workout", response_model=WorkoutPlan)
@@ -49,7 +49,7 @@ async def generate_workout_plan(
     generator = AIWorkoutGenerator()
     workout_plan = generator.generate_workout_plan(user_profile)
 
-    # Store the plan (keeping in-memory for now, can be moved to DB later)
+    #Store the plan (keeping in-memory for now, can be moved to DB later)
     workout_plans[workout_plan.id] = workout_plan
 
     return workout_plan
@@ -62,11 +62,11 @@ async def get_workout_plan(workout_id: str):
 
 @app.post("/workout/{workout_id}/complete-exercise")
 async def mark_exercise_complete(workout_id: str, day: int, exercise_name: str):
-    # This will be used by the React todo list functionality
+    #This will be used by the React todo list functionality
     if workout_id not in workout_plans:
         raise HTTPException(status_code=404, detail="Workout plan not found")
     
-    # Implementation for tracking completed exercises
+    #Implementation for tracking completed exercises
     return {"message": "Exercise marked as completed"}
 
 @app.get("/")

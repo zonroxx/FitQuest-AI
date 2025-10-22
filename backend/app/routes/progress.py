@@ -17,7 +17,7 @@ def get_user_progress(
     progress = db.query(UserProgress).filter(UserProgress.user_id == current_user.id).first()
 
     if not progress:
-        # Create initial progress if doesn't exist
+        #Create initial progress if doesn't exist
         progress = UserProgress(
             user_id=current_user.id,
             level=1,
@@ -49,7 +49,7 @@ def update_user_progress(
             detail="Progress not found"
         )
 
-    # Update only provided fields
+    #Update only provided fields
     update_data = progress_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(progress, field, value)

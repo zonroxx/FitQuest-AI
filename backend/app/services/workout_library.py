@@ -1,5 +1,5 @@
 from typing import List
-# Pre-defined exercise library
+#Pre-defined exercise library
 EXERCISE_LIBRARY = {
     "strength": [
         {

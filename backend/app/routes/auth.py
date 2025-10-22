@@ -18,7 +18,7 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 @router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def signup(user_data: UserCreate, db: Session = Depends(get_db)):
     """Register a new user"""
-    # Check if email already exists
+    #Check if email already exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
         raise HTTPException(
@@ -26,7 +26,7 @@ def signup(user_data: UserCreate, db: Session = Depends(get_db)):
             detail="Email already registered"
         )
 
-    # Check if username already exists
+    #Check if username already exists
     existing_username = db.query(User).filter(User.username == user_data.username).first()
     if existing_username:
         raise HTTPException(
@@ -34,7 +34,7 @@ def signup(user_data: UserCreate, db: Session = Depends(get_db)):
             detail="Username already taken"
         )
 
-    # Create new user
+    #Create new user
     hashed_password = get_password_hash(user_data.password)
     new_user = User(
         email=user_data.email,
@@ -50,7 +50,7 @@ def signup(user_data: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    # Create initial user progress
+    #Create initial user progress
     user_progress = UserProgress(
         user_id=new_user.id,
         level=1,
@@ -98,7 +98,7 @@ def update_user_profile(
     db: Session = Depends(get_db)
 ):
     """Update current user's profile information"""
-    # Update only provided fields
+    #Update only provided fields
     update_data = user_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(current_user, field, value)

@@ -6,21 +6,23 @@ from datetime import date
 import uuid
 from dotenv import load_dotenv
 
-# Load environment variables
+#Load environment variables
 load_dotenv()
 
 from app.models.user import UserProfile
 from app.models.workout import WorkoutPlan, WorkoutDay, WorkoutWeek, Exercise, ExerciseType
 from app.services.workout_library import EXERCISE_LIBRARY
+from app.services.fallback_workout_generator import FallbackWorkoutGenerator
 
 
 class HuggingFaceWorkoutGenerator:
     def __init__(self):
-        # Use the correct Chat Completions API endpoint
+        self.fallback_generator = FallbackWorkoutGenerator()
+        #Use the correct Chat Completions API endpoint
         self.api_url = "https://router.huggingface.co/v1/chat/completions"
         self.api_token = os.getenv("HUGGINGFACE_API_TOKEN")
 
-        # List of models to try in order
+        #List of models to try in order
         self.models = [
             "Qwen/Qwen3-Next-80B-A3B-Instruct:novita",
             "deepseek-ai/DeepSeek-R1:novita",
@@ -46,9 +48,11 @@ class HuggingFaceWorkoutGenerator:
                 return self._generate_with_huggingface(user_profile)
             except Exception as e:
                 print(f"ERROR: AI generation failed: {e}")
-                return self._get_fallback_workout(user_profile)
+                print("Using fallback workout generator...")
+                return self.fallback_generator.generate_workout_plan(user_profile)
         else:
-            return self._get_fallback_workout(user_profile)
+            print("No API token found. Using fallback workout generator...")
+            return self.fallback_generator.generate_workout_plan(user_profile)
     
     def _generate_with_huggingface(self, user_profile: UserProfile) -> WorkoutPlan:
         prompt = self._build_prompt(user_profile)
@@ -102,12 +106,12 @@ class HuggingFaceWorkoutGenerator:
                 last_error = error_msg
                 continue
 
-        # If all models failed, raise the last error
+        #If all models failed, raise the last error
         print(f"All {len(self.models)} models failed. Using fallback workout.")
         raise Exception(f"All models failed. Last error: {last_error}")
     
     def _build_prompt(self, profile: UserProfile) -> str:
-        # Build the available exercises list from the library
+        #Build the available exercises list from the library
         available_exercises = "\n\nAVAILABLE EXERCISES (You MUST only choose from these):\n"
 
         for exercise_type, exercises in EXERCISE_LIBRARY.items():
@@ -179,16 +183,16 @@ CRITICAL: Return ONLY valid JSON on a single line with NO newlines, NO formattin
         print(f"Parsing response...")
 
         try:
-            # Extract the message content from the response
+            #Extract the message content from the response
             message_content = response_data["choices"][0]["message"]["content"]
 
-            # Try to extract JSON from the response
+            #Try to extract JSON from the response
             workout_data = self._extract_json_from_text(message_content)
 
             if workout_data:
                 return workout_data
             else:
-                # If JSON extraction fails, return default workout data
+                #If JSON extraction fails, return default workout data
                 print("JSON extraction failed, using default workout data")
                 return self._get_default_workout_data()
 
@@ -200,10 +204,10 @@ CRITICAL: Return ONLY valid JSON on a single line with NO newlines, NO formattin
         """Extract JSON from text response"""
         json_str = ""
         try:
-            # Clean the text and find JSON
+            #Clean the text and find JSON
             text = text.strip()
 
-            # Look for JSON object
+            #Look for JSON object
             start_idx = text.find('{')
             end_idx = text.rfind('}') + 1
 
@@ -211,18 +215,18 @@ CRITICAL: Return ONLY valid JSON on a single line with NO newlines, NO formattin
                 json_str = text[start_idx:end_idx]
                 print(f"Extracted JSON length: {len(json_str)} characters")
 
-                # Try to fix common JSON issues
+                #Try to fix common JSON issues
                 json_str = self._fix_common_json_issues(json_str)
 
-                # Parse the JSON first
+                #Parse the JSON first
                 parsed_json = json.loads(json_str)
 
-                # Save formatted JSON to a file for debugging
+                #Save formatted JSON to a file for debugging
                 with open("debug_workout.json", "w") as f:
                     json.dump(parsed_json, f, indent=2)
                 print("Saved formatted JSON to debug_workout.json for inspection")
 
-                # Print the complete formatted workout
+                #Print the complete formatted workout
                 print("AI Generated Workout (complete):")
                 print(json.dumps(parsed_json, indent=2))
 
@@ -235,7 +239,7 @@ CRITICAL: Return ONLY valid JSON on a single line with NO newlines, NO formattin
                 end = min(len(json_str), e.pos + 100)
                 print(f"...{json_str[start:end]}...")
 
-                # Try to auto-fix the JSON
+                #Try to auto-fix the JSON
                 fixed_json = self._attempt_json_fix(json_str, e.pos)
                 if fixed_json:
                     try:
@@ -249,22 +253,22 @@ CRITICAL: Return ONLY valid JSON on a single line with NO newlines, NO formattin
         """Fix common JSON formatting issues"""
         import re
 
-        # Remove actual newlines and tabs (replace with spaces)
+        #Remove actual newlines and tabs (replace with spaces)
         json_str = json_str.replace('\n', ' ').replace('\t', ' ')
 
-        # Remove extra whitespace
+        #Remove extra whitespace
         json_str = re.sub(r'\s+', ' ', json_str)
 
-        # Remove trailing commas before closing brackets/braces
+        #Remove trailing commas before closing brackets/braces
         json_str = re.sub(r',(\s*[}\]])', r'\1', json_str)
 
-        # Fix missing commas between objects/arrays
+        #Fix missing commas between objects/arrays
         json_str = re.sub(r'}\s*{', '},{', json_str)
         json_str = re.sub(r']\s*\[', '],[', json_str)
         json_str = re.sub(r'}\s*\[', '},[', json_str)
         json_str = re.sub(r']\s*{', '],{', json_str)
 
-        # Fix common quote issues (but be careful not to break valid escapes)
+        #Fix common quote issues (but be careful not to break valid escapes)
         json_str = re.sub(r'([^\\])"([^":,}\]]+)"([^:])', r'\1"\2"\3', json_str)
 
         return json_str.strip()
@@ -274,20 +278,20 @@ CRITICAL: Return ONLY valid JSON on a single line with NO newlines, NO formattin
         import re
 
         try:
-            # Check if it's a missing comma issue
+            #Check if it's a missing comma issue
             if error_pos < len(json_str):
                 char_at_pos = json_str[error_pos]
                 char_before = json_str[error_pos - 1] if error_pos > 0 else ''
 
-                # If we're expecting a comma and found a quote or brace
+                #If we're expecting a comma and found a quote or brace
                 if char_at_pos in ['"', '{'] and char_before in ['}', ']']:
                     print(f"Attempting to fix missing comma at position {error_pos}")
                     fixed_json = json_str[:error_pos] + ',' + json_str[error_pos:]
                     return fixed_json
 
-                # Check for unescaped quotes in strings
+                #Check for unescaped quotes in strings
                 if char_at_pos == '"' and char_before != '\\':
-                    # Look backwards to see if we're inside a string value
+                    #Look backwards to see if we're inside a string value
                     context_start = max(0, error_pos - 50)
                     context = json_str[context_start:error_pos + 50]
                     if context.count('"') % 2 == 1:  # Odd number means we're inside a string
@@ -295,7 +299,7 @@ CRITICAL: Return ONLY valid JSON on a single line with NO newlines, NO formattin
                         fixed_json = json_str[:error_pos] + '\\"' + json_str[error_pos + 1:]
                         return fixed_json
 
-            # Try to fix trailing commas
+            #Try to fix trailing commas
             fixed_json = re.sub(r',(\s*[}\]])', r'\1', json_str)
             if fixed_json != json_str:
                 print("Fixed trailing commas")
@@ -310,10 +314,10 @@ CRITICAL: Return ONLY valid JSON on a single line with NO newlines, NO formattin
         """Generate a simple default weekly workout structure"""
         weekly_schedule = []
 
-        # Define workout focuses for variety
+        #Define workout focuses for variety
         focuses = ["Upper Body", "Lower Body", "Full Body", "Core & Cardio", "Strength"]
 
-        # Create 5 days of workouts
+        #Create 5 days of workouts
         for day_num in range(1, 6):
             focus = focuses[(day_num - 1) % len(focuses)]
             weekly_schedule.append({
@@ -345,7 +349,7 @@ CRITICAL: Return ONLY valid JSON on a single line with NO newlines, NO formattin
     def _create_workout_plan(self, user_profile: UserProfile, workout_data: Dict) -> WorkoutPlan:
         """Create WorkoutPlan from data"""
 
-        # Parse the weekly schedule from the data
+        #Parse the weekly schedule from the data
         weekly_schedule = []
         for day_data in workout_data.get("weekly_schedule", []):
             exercises = []
@@ -375,90 +379,7 @@ CRITICAL: Return ONLY valid JSON on a single line with NO newlines, NO formattin
             duration_weeks=1,
             weekly_schedule=weekly_schedule
         )
-    
-    def _get_fallback_workout(self, user_profile: UserProfile) -> WorkoutPlan:
-        """Fallback workout with simple weekly structure"""
-
-        # Define different workout focuses for variety
-        workout_focuses = [
-            "Upper Body Strength",
-            "Lower Body Strength",
-            "Full Body Circuit",
-            "Core & Flexibility",
-            "Cardio & Conditioning"
-        ]
-
-        # Create exercises based on available equipment
-        def get_exercises_for_day(day_focus: str) -> list:
-            if "Upper Body" in day_focus:
-                return [
-                    Exercise(name="Push-ups", type=ExerciseType.STRENGTH, sets=3, reps=12, rest=60),
-                    Exercise(name="Dumbbell Rows", type=ExerciseType.STRENGTH, sets=3, reps=10, rest=60) if "dumbbells" in user_profile.available_equipment else Exercise(name="Pike Push-ups", type=ExerciseType.STRENGTH, sets=3, reps=8, rest=60),
-                    Exercise(name="Plank", type=ExerciseType.CORE, sets=3, duration=30, rest=30)
-                ]
-            elif "Lower Body" in day_focus:
-                return [
-                    Exercise(name="Squats", type=ExerciseType.STRENGTH, sets=3, reps=15, rest=60),
-                    Exercise(name="Lunges", type=ExerciseType.STRENGTH, sets=3, reps=12, rest=60),
-                    Exercise(name="Glute Bridges", type=ExerciseType.STRENGTH, sets=3, reps=15, rest=45)
-                ]
-            elif "Core" in day_focus:
-                return [
-                    Exercise(name="Plank", type=ExerciseType.CORE, sets=3, duration=45, rest=30),
-                    Exercise(name="Mountain Climbers", type=ExerciseType.CORE, sets=3, reps=20, rest=30),
-                    Exercise(name="Dead Bug", type=ExerciseType.CORE, sets=3, reps=10, rest=30)
-                ]
-            elif "Cardio" in day_focus:
-                return [
-                    Exercise(name="Jumping Jacks", type=ExerciseType.CARDIO, sets=3, duration=45, rest=30),
-                    Exercise(name="High Knees", type=ExerciseType.CARDIO, sets=3, duration=30, rest=30),
-                    Exercise(name="Burpees", type=ExerciseType.CARDIO, sets=3, reps=8, rest=60)
-                ]
-            else:  # Full Body
-                return [
-                    Exercise(name="Push-ups", type=ExerciseType.STRENGTH, sets=3, reps=10, rest=60),
-                    Exercise(name="Squats", type=ExerciseType.STRENGTH, sets=3, reps=12, rest=60),
-                    Exercise(name="Plank", type=ExerciseType.CORE, sets=2, duration=30, rest=30)
-                ]
-
-        # Create base weekly schedule
-        weekly_schedule = []
-        for day in range(user_profile.days_per_week):
-            focus = workout_focuses[day % len(workout_focuses)]
-            exercises = get_exercises_for_day(focus)
-
-            workout_day = WorkoutDay(
-                day=day + 1,
-                focus=focus,
-                exercises=exercises,
-                total_duration=user_profile.workout_duration or 40
-            )
-            weekly_schedule.append(workout_day)
-
-        # Create the workout data in the expected format
-        workout_data = {
-            "weekly_schedule": [
-                {
-                    "day": day.day,
-                    "focus": day.focus,
-                    "exercises": [
-                        {
-                            "name": ex.name,
-                            "type": ex.type.value,
-                            "sets": ex.sets,
-                            "reps": ex.reps,
-                            "duration": ex.duration,
-                            "rest": ex.rest
-                        } for ex in day.exercises
-                    ],
-                    "total_duration": day.total_duration
-                } for day in weekly_schedule
-            ]
-        }
-
-        # Use the same creation logic as AI-generated workouts
-        return self._create_workout_plan(user_profile, workout_data)
 
 
-# For backward compatibility
+#For backward compatibility
 AIWorkoutGenerator = HuggingFaceWorkoutGenerator

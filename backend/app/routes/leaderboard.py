@@ -30,7 +30,7 @@ async def get_leaderboard(
 ):
     """Get top 10 users by level and exp, plus current user's rank"""
 
-    # Get all users with their progress, sorted by level desc, then exp desc
+    #Get all users with their progress
     all_users = db.query(
         User.username,
         UserProgress.level,
@@ -44,7 +44,6 @@ async def get_leaderboard(
         UserProgress.current_exp.desc()
     ).all()
 
-    # Create ranked list
     ranked_users = []
     current_user_entry = None
 
@@ -57,11 +56,9 @@ async def get_leaderboard(
             total_exercises_completed=user.total_exercises_completed
         )
 
-        # Store top 10
         if idx <= 10:
             ranked_users.append(entry)
 
-        # Store current user's rank
         if user.id == current_user.id:
             current_user_entry = entry
 
