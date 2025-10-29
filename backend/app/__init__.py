@@ -1,6 +1,4 @@
-#app/__init__.py
-__version__ = "1.0.0"
-__author__ = "Your Name"
+__version__ = "0.1.0"
+__author__ = "Lec-Group17, Lab-Group11"
 
-#Code that runs when package is imported
 print("Workout Planner package loaded")

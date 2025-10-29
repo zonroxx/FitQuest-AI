@@ -13,7 +13,7 @@ from app.models.db_models import User
 #Secret key for JWT - should be in environment variables
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here-change-in-production")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 
 
 #Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

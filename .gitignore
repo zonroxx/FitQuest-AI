@@ -48,9 +48,6 @@ build/
 *~
 .DS_Store
 
-# Claude Code specific
-.claude/
-
 # Database
 *.db
 *.sqlite
