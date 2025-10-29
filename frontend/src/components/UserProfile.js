@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const UserProfile = ({ userProfile, token, onProfileUpdate, onClose }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState({
@@ -24,7 +26,7 @@ const UserProfile = ({ userProfile, token, onProfileUpdate, onClose }) => {
       setIsSaving(true);
       setError('');
 
-      const response = await fetch('http://localhost:8000/auth/me', {
+      const response = await fetch(`${API_URL}/auth/me`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

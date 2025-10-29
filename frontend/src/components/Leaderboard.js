@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const Leaderboard = ({ token, onClose }) => {
   const [leaderboardData, setLeaderboardData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -12,7 +14,7 @@ const Leaderboard = ({ token, onClose }) => {
   const fetchLeaderboard = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:8000/leaderboard/', {
+      const response = await fetch(`${API_URL}/leaderboard/`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

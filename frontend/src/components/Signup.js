@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const Signup = ({ onSignup, onSwitchToLogin }) => {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -31,7 +33,7 @@ const Signup = ({ onSignup, onSwitchToLogin }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/auth/signup', {
+      const response = await fetch(`${API_URL}/auth/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -54,7 +56,7 @@ const Signup = ({ onSignup, onSwitchToLogin }) => {
       }
 
       // Auto-login after signup
-      const loginResponse = await fetch('http://localhost:8000/auth/login', {
+      const loginResponse = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

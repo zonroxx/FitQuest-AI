@@ -8,6 +8,9 @@ import Signup from './components/Signup';
 import { getInitialProgress, saveProgress, processLevelUp } from './utils/progressSystem';
 import './App.css';
 
+// Use environment variable for API URL, fallback to localhost for local development
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showLogin, setShowLogin] = useState(true);
@@ -28,7 +31,7 @@ function App() {
   // Fetch user profile from backend
   const fetchUserProfile = async (authToken) => {
     try {
-      const response = await fetch('http://localhost:8000/auth/me', {
+      const response = await fetch(`${API_URL}/auth/me`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -47,7 +50,7 @@ function App() {
   // Fetch user's current workout from backend
   const fetchCurrentWorkout = async (authToken) => {
     try {
-      const response = await fetch('http://localhost:8000/workouts/current', {
+      const response = await fetch(`${API_URL}/workouts/current`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -78,7 +81,7 @@ function App() {
   // Fetch user progress from backend
   const fetchUserProgress = async (authToken) => {
     try {
-      const response = await fetch('http://localhost:8000/progress/', {
+      const response = await fetch(`${API_URL}/progress/`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -185,7 +188,7 @@ function App() {
             completed_exercises: userProgress.completedExercises
           };
 
-          await fetch('http://localhost:8000/progress/', {
+          await fetch(`${API_URL}/progress/`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -230,7 +233,7 @@ function App() {
     if (window.confirm('Are you sure you want to reset all progress? This will clear your level, XP, weeks, completed exercises, and current workout.')) {
       try {
         // Reset progress on backend
-        await fetch('http://localhost:8000/progress/', {
+        await fetch(`${API_URL}/progress/`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -238,7 +241,7 @@ function App() {
         });
 
         // Delete current workout from backend
-        await fetch('http://localhost:8000/workouts/current', {
+        await fetch(`${API_URL}/workouts/current`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -323,7 +326,7 @@ function App() {
         fitness_level: userProfile.fitness_level
       };
 
-      const response = await fetch('http://localhost:8000/generate-workout', {
+      const response = await fetch(`${API_URL}/generate-workout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -350,7 +353,7 @@ function App() {
 
       // Save workout to database
       try {
-        await fetch('http://localhost:8000/workouts/', {
+        await fetch(`${API_URL}/workouts/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
