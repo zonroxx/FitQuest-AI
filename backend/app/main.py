@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 import uuid
+import os
 from datetime import date
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
@@ -23,9 +24,11 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="FitQuest API")
 
 #CORS middleware for React frontend
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # React app URL
+    allow_origins=[frontend_url, "http://localhost:3000"],  #Support both production and local
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
