@@ -14,6 +14,16 @@ const WorkoutTodoList = ({ workout, onExpGain, userProgress, currentWeek }) => {
     return new Set();
   });
 
+  // Update completed exercises when userProgress changes (e.g., after fetching from backend)
+  useEffect(() => {
+    if (userProgress && userProgress.completedExercises) {
+      const newCompleted = new Set(Object.keys(userProgress.completedExercises).filter(
+        key => key.startsWith(`week${currentWeek}-`) && userProgress.completedExercises[key] === true
+      ));
+      setCompletedExercises(newCompleted);
+    }
+  }, [userProgress, currentWeek]);
+
   if (!workout) return <div>Select a day to view workout</div>;
 
   const completeExercise = (exerciseIndex) => {
