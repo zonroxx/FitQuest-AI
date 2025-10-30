@@ -26,9 +26,19 @@ app = FastAPI(title="FitQuest API")
 #CORS middleware for React frontend
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
+# Build allowed origins list
+allowed_origins = [
+    "http://localhost:3000",  # Local development
+    frontend_url  # Production frontend
+]
+
+# If FRONTEND_URL is set and different from localhost, add it
+if frontend_url and frontend_url not in allowed_origins:
+    allowed_origins.append(frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_url, "http://localhost:3000"],  #Support both production and local
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

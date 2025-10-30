@@ -28,89 +28,133 @@ function App() {
   const [userProgress, setUserProgress] = useState(getInitialProgress());
   const [workoutStartDay, setWorkoutStartDay] = useState(0); // Track starting day for current workout
 
-  // Fetch user profile from backend
-  const fetchUserProfile = async (authToken) => {
-    try {
-      const response = await fetch(`${API_URL}/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
+  // Fetch user profile from backend with retry logic for cold starts
+  const fetchUserProfile = async (authToken, retries = 3, delay = 2000) => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        console.log(`Fetching user profile (attempt ${attempt}/${retries})...`);
+        const response = await fetch(`${API_URL}/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
 
-      if (response.ok) {
-        const profile = await response.json();
-        console.log('Fetched user profile:', profile);
-        setUserProfile(profile);
+        if (response.ok) {
+          const profile = await response.json();
+          console.log('Fetched user profile:', profile);
+          setUserProfile(profile);
+          return; // Success, exit retry loop
+        } else if (attempt < retries) {
+          console.log(`Profile fetch failed, retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          delay *= 1.5; // Exponential backoff
+        }
+      } catch (error) {
+        console.error(`Error fetching user profile (attempt ${attempt}):`, error);
+        if (attempt < retries) {
+          console.log(`Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          delay *= 1.5; // Exponential backoff
+        }
       }
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
     }
+    console.error('Failed to fetch user profile after all retries');
   };
 
-  // Fetch user's current workout from backend
-  const fetchCurrentWorkout = async (authToken) => {
-    try {
-      const response = await fetch(`${API_URL}/workouts/current`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
+  // Fetch user's current workout from backend with retry logic for cold starts
+  const fetchCurrentWorkout = async (authToken, retries = 3, delay = 2000) => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        console.log(`Fetching current workout (attempt ${attempt}/${retries})...`);
+        const response = await fetch(`${API_URL}/workouts/current`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
 
-      if (response.ok) {
-        const workoutData = await response.json();
-        if (workoutData && workoutData.plan_data) {
-          console.log('Fetched current workout:', workoutData);
-          setWorkout(workoutData.plan_data);
-          setShowForm(false);
-          // Calculate workout start day based on saved week number
-          const daysInWorkout = workoutData.plan_data.weekly_schedule ? workoutData.plan_data.weekly_schedule.length : 0;
-          const startDay = (workoutData.week_number - 1) * daysInWorkout;
-          setWorkoutStartDay(startDay);
+        if (response.ok) {
+          const workoutData = await response.json();
+          if (workoutData && workoutData.plan_data) {
+            console.log('Fetched current workout:', workoutData);
+            setWorkout(workoutData.plan_data);
+            setShowForm(false);
+            // Calculate workout start day based on saved week number
+            const daysInWorkout = workoutData.plan_data.weekly_schedule ? workoutData.plan_data.weekly_schedule.length : 0;
+            const startDay = (workoutData.week_number - 1) * daysInWorkout;
+            setWorkoutStartDay(startDay);
+            return; // Success, exit retry loop
+          } else {
+            setShowForm(true);
+            return; // No workout found, exit retry loop
+          }
+        } else if (attempt < retries) {
+          console.log(`Workout fetch failed, retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          delay *= 1.5; // Exponential backoff
         } else {
           setShowForm(true);
         }
-      } else {
-        setShowForm(true);
+      } catch (error) {
+        console.error(`Error fetching current workout (attempt ${attempt}):`, error);
+        if (attempt < retries) {
+          console.log(`Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          delay *= 1.5; // Exponential backoff
+        } else {
+          setShowForm(true);
+        }
       }
-    } catch (error) {
-      console.error('Error fetching current workout:', error);
-      setShowForm(true);
     }
+    console.error('Failed to fetch current workout after all retries');
   };
 
-  // Fetch user progress from backend
-  const fetchUserProgress = async (authToken) => {
-    try {
-      const response = await fetch(`${API_URL}/progress/`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
+  // Fetch user progress from backend with retry logic for cold starts
+  const fetchUserProgress = async (authToken, retries = 3, delay = 2000) => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        console.log(`Fetching user progress (attempt ${attempt}/${retries})...`);
+        const response = await fetch(`${API_URL}/progress/`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
 
-      if (response.ok) {
-        const progress = await response.json();
-        console.log('Fetched progress:', progress);
-        // Ensure all fields exist with defaults
-        const completeProgress = {
-          level: progress.level || 1,
-          current_exp: progress.current_exp || 0,
-          currentExp: progress.current_exp || 0,
-          exp_to_next_level: progress.exp_to_next_level || 100,
-          expToNextLevel: progress.exp_to_next_level || 100,
-          total_exercises_completed: progress.total_exercises_completed || 0,
-          totalExercisesCompleted: progress.total_exercises_completed || 0,
-          current_week: progress.current_week || 0,
-          currentWeek: progress.current_week || 0,
-          total_days: progress.total_days || 0,
-          totalDays: progress.total_days || 0,
-          completed_exercises: progress.completed_exercises || {},
-          completedExercises: progress.completed_exercises || {}
-        };
-        setUserProgress(completeProgress);
+        if (response.ok) {
+          const progress = await response.json();
+          console.log('Fetched progress:', progress);
+          // Ensure all fields exist with defaults
+          const completeProgress = {
+            level: progress.level || 1,
+            current_exp: progress.current_exp || 0,
+            currentExp: progress.current_exp || 0,
+            exp_to_next_level: progress.exp_to_next_level || 100,
+            expToNextLevel: progress.exp_to_next_level || 100,
+            total_exercises_completed: progress.total_exercises_completed || 0,
+            totalExercisesCompleted: progress.total_exercises_completed || 0,
+            current_week: progress.current_week || 0,
+            currentWeek: progress.current_week || 0,
+            total_days: progress.total_days || 0,
+            totalDays: progress.total_days || 0,
+            completed_exercises: progress.completed_exercises || {},
+            completedExercises: progress.completed_exercises || {}
+          };
+          setUserProgress(completeProgress);
+          return; // Success, exit retry loop
+        } else if (attempt < retries) {
+          console.log(`Progress fetch failed, retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          delay *= 1.5; // Exponential backoff
+        }
+      } catch (error) {
+        console.error(`Error fetching user progress (attempt ${attempt}):`, error);
+        if (attempt < retries) {
+          console.log(`Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          delay *= 1.5; // Exponential backoff
+        }
       }
-    } catch (error) {
-      console.error('Error fetching user progress:', error);
     }
+    console.error('Failed to fetch user progress after all retries');
   };
 
   // Check for existing token on mount
